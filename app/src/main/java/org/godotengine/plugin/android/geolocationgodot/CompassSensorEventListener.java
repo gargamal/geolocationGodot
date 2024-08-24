@@ -15,9 +15,6 @@ public class CompassSensorEventListener implements SensorEventListener {
 
     private static final int TIME_GAP_MS = 200;
 
-    private final float[] lastAccelerometer = new float[3];
-    private final float[] lastMagnetometer = new float[3];
-
     private final GeoLocationAndroidGodot godotPlugin;
     private final Sensor magnetometer;
     private final Sensor accelerometer;
@@ -38,27 +35,33 @@ public class CompassSensorEventListener implements SensorEventListener {
         sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
+    private float[] mGravity = null;
+    private float[] mGeomagnetic = null;
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         var currentTime = LocalTime.now();
         if (currentTime.toNanoOfDay() - lastUpdate.toNanoOfDay() > TIME_GAP_MS * 1000000) {
 
-            if (event.sensor == magnetometer) {
-                System.arraycopy(event.values, 0, lastMagnetometer, 0, event.values.length);
-            } else if (event.sensor == accelerometer) {
-                System.arraycopy(event.values, 0, lastAccelerometer, 0, event.values.length);
+            switch (event.sensor.getType()) {
+                case Sensor.TYPE_ACCELEROMETER:
+                    mGravity = event.values;
+                case Sensor.TYPE_MAGNETIC_FIELD:
+                    mGeomagnetic = event.values;
             }
 
-            final var rotationMatrix = new float[9];
-            final var orientation = new float[3];
+            if (mGravity != null && mGeomagnetic != null) {
+                float[] R = new float[9];
+                float[] I = new float[9];
+                if (SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic)) {
+                    float[] orientation = new float[3];
+                    SensorManager.getOrientation(R, orientation);
+                    azimuthInRadians = (orientation[0]);
+                }
 
-            SensorManager.getRotationMatrix(rotationMatrix, null, lastAccelerometer, lastMagnetometer);
-            SensorManager.getOrientation(rotationMatrix, orientation);
-
-            azimuthInRadians = orientation[0];
-
-            godotPlugin.emitSignal(godotPlugin.getSensorChangeSignal().getName(), azimuthInRadians);
-            lastUpdate = currentTime;
+                godotPlugin.emitSignal(godotPlugin.getSensorChangeSignal().getName(), azimuthInRadians);
+                lastUpdate = currentTime;
+            }
         }
     }
 

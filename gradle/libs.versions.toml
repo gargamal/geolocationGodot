@@ -1,16 +1,13 @@
 [versions]
 agp = "8.5.2"
 godot = "4.3.0.stable"
-espressoCore = "3.6.1"
 appcompat = "1.7.0"
 material = "1.12.0"
-playServices = "23.3.0"
 
 [libraries]
 godot = { module = "org.godotengine:godot", version.ref = "godot" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
-play-services = { module = "com.google.android.gms:play-services-ads-lite", version.ref = "playServices" }
 
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }

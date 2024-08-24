@@ -46,5 +46,4 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.godot)
-    implementation(libs.play.services)
 }
