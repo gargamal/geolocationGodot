@@ -85,18 +85,14 @@ public class GeoLocationAndroidGodot extends GodotPlugin {
                 && ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return "PERMISSION NOT GRANTED";
         }
-
         final var locationManager = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-            return "NO GPS PROVIDER";
-        else if (!locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            return "NO NETWORK PROVIDER";
-        }
 
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(() -> {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500, 0.1f, gpsLocationListener);
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 500, 0.1f, gpsLocationListener);
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500, 0.1f, gpsLocationListener);
+            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 500, 0.1f, gpsLocationListener);
         });
 
         return "OK";
