@@ -18,10 +18,12 @@ import org.godotengine.godot.plugin.GodotPlugin;
 import org.godotengine.godot.plugin.SignalInfo;
 import org.godotengine.godot.plugin.UsedByGodot;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class GeoLocationAndroidGodot extends GodotPlugin {
 
+    private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
     private final SignalInfo locationUpdateSignal = new SignalInfo("onLocationUpdates", Dictionary.class);
     private final SignalInfo lastKnownLocationSignal = new SignalInfo("onLastKnownLocation", Dictionary.class);
     private final SignalInfo errorSignal = new SignalInfo("onLocationError", Integer.class, String.class);
@@ -46,6 +48,7 @@ public class GeoLocationAndroidGodot extends GodotPlugin {
     public void onGodotSetupCompleted() {
         super.onGodotSetupCompleted();
         gpsLocationListener = new GpsLocationListener(this, getGodot());
+        requestPermissions();
     }
 
     public SignalInfo getLastKnownLocationSignal() {
@@ -64,6 +67,12 @@ public class GeoLocationAndroidGodot extends GodotPlugin {
     @Override
     public String getPluginName() {
         return BuildConfig.GODOT_PLUGIN_NAME;
+    }
+
+    private void requestPermissions() {
+        ActivityCompat.requestPermissions(Objects.requireNonNull(getActivity()),
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                REQUEST_PERMISSIONS_REQUEST_CODE);
     }
 
     @UsedByGodot
@@ -85,7 +94,11 @@ public class GeoLocationAndroidGodot extends GodotPlugin {
                 && ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return "PERMISSION NOT GRANTED";
         }
+
         final var locationManager = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+            emitSignal(errorSignal.getName(), -10, "NO GPS Activity");
+
 
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(() -> {
